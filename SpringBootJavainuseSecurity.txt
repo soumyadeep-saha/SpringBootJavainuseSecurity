@@ -1,0 +1,201 @@
+SpringBootJavainuseSecurity
+
+We will be configuring security for a SBA
+
+SpringBootJavainuseDataJPAH2(Spring Boot Data JPA using H2 database implementation) in the first input to this spring boot security application. We will be applying our changes on top of spring boot jpa h2 application
+
+Add spring-boot-starter-security in the pom.xml, it will automatically enable the default security
+Username will be "user"
+Password will ne printed in the console logs(e8d35bc6-eebd-4b14-8fd1-420a0571f0ee)
+
+We will configure our own custom SB security configuration
+We will create a new class SecurityConfig extends WebSecurityConfigurerAdapter
+It will override 2 overloaded methods
+In one method we will specify username and password and will also provide inmemory authentication
+In then other method we will configure if the user access any of the url, he will be forwarded to the login.jsp page
+Create SecurityConfig.java in .config package and create login.jsp in webapp folder
+
+
+Spring Boot + Security Hello world Example
+In this post we configure a spring boot application to add basic authorization and authentication.Spring MVC Security had created a Simple Spring MVC Security example using Basic Authentication . But as can be seen in that post lot of configuration had to be done. This chapter we see how simple it is for configuring security with Spring Boot. We will be adding the spring security configuration for the Spring Boot web project developed previously. We have implemented Spring Boot Form Security Login Hello World Example here 
+
+Spring Boot Security - Table Of Contents
+
+
+Spring Boot + Simple Security Configuration
+Spring Boot Form Security Login Hello World Example
+Spring Boot Security - Custom Login Page Example
+Spring Boot Security - JDBC Authentication Example
+Spring Boot Security - Creating Users Programmatically Using JdbcUserDetailsManager
+Spring Boot Security - Password Encoding Using Bcrypt
+Spring Boot Security - Enabling CSRF Protection
+Spring Boot Security - Authentication Handler Example
+Spring Boot Security - Introduction to OAuth
+Spring Boot OAuth2 Part 1 - Getting The Authorization Code
+Spring Boot OAuth2 Part 2 - Getting The Access Token And Using it to Fetch Data.
+Video
+
+This tutorial is explained in the below Youtube Video.
+
+
+
+Lets Begin-
+
+We will modify the project we developed.The maven project will be as follows-
+
+In the Maven we only need the spring-boot-starter-security dependency.Maven will be as follows-
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.javainuse</groupId>
+	<artifactId>SpringBootHelloWorld</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>SpringBootHelloWorld</name>
+	<description>Demo project for Spring Boot</description>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.4.1.RELEASE</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+
+</project>
+	
+
+ 
+Lets not add any security configuration and run this code.
+Goto-http://localhost:8080/listEmployees.html
+
+We can see that no security configuration is added still it asks for username password. This is expected behaviour. We will see that the password is system generated when we run the boot application.
+
+Thus by just adding the spring boot security starter dependency the basic security has already been configured by default. Lets customize the security configuration by writing our own authorization and authentication. For this create a new class SecurityConfig that extends the WebSecurityConfigurerAdapter and overrides its methods.
+package com.javainuse.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+	@Override
+	public void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.inMemoryAuthentication().withUser("javainuse")
+				.password("javainuse").roles("USER");
+	}
+
+	@Override
+	public void configure(HttpSecurity http) throws Exception {
+		http.antMatcher("/**").authorizeRequests().anyRequest().hasRole("USER")
+				.and().formLogin().loginPage("/login.jsp")
+				.failureUrl("/login.jsp?error=1").loginProcessingUrl("/login")
+				.permitAll().and().logout()
+				.logoutSuccessUrl("/listEmployees.html");
+
+	}
+
+}
+	
+
+ 
+We have added a new page named login.jsp. Users will get redirected to this page for adding credentials.
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+
+<html>
+	<head>
+		<title>Employees Login</title>
+	</head>		
+
+	<body>
+	
+		<h1><strong>Employees Login</strong></h1>
+						
+		<c:url value="/login" var="login"/>
+		
+		<form:form action="" method="post">
+			<label>Username:</label> <input type="text" name="username" />
+			<label>Password:</label> <input type="text" name="password" />
+			<input type="submit"/>
+		</form:form>
+	</body>
+</html>
+	
+
+This are the only changes required. Run the application. Goto-http://localhost:8080/listEmployees.html
+User will be automatically redirected to localhost:8080/login.jsp
+
+On entering the username and password as 'javainuse' the user will be able to visit all the other URLs correctly.
+Download Source Code
+Download it -
+Spring Boot + Security Configuration
+
